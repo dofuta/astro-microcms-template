@@ -1,0 +1,46 @@
+@use "sass:math";
+
+// Screen sizes
+$baseScreenWidthPc: 1440 !default;
+$thresholdScreenWidth: 820 !default;
+$baseScreenWidthMobile: 390 !default;
+
+// color
+$text-primary: #ffffff !default;
+$text-secondary: #fff !default;
+$text-third: #b2b2b2 !default;
+$text-weaker: #848484 !default;
+
+$background-primary: #f2f2f2 !default;
+$background-secondary: #191919 !default;
+
+$border-primary: #ffffff !default;
+$border-weaker: #b2b2b2 !default;
+
+@mixin pc {
+  @media screen and (min-width: #{$baseScreenWidthPc + 1}px) {
+    @content;
+  }
+}
+
+@function vw_pc($px) {
+  @return math.div($px, $baseScreenWidthPc) * 100 + vw;
+}
+
+@mixin font-size_pc($px) {
+  font-size: math.div($px, $baseScreenWidthPc) * 100 + vw;
+}
+
+@mixin mobile {
+  @media screen and (max-width: #{$thresholdScreenWidth}px) {
+    @content;
+  }
+}
+
+@function vw_mobile($px) {
+  @return math.div($px, $baseScreenWidthMobile) * 100 + vw;
+}
+
+@mixin font-size_mobile($px) {
+  font-size: math.div($px, $baseScreenWidthMobile) * 100 + vw;
+}
