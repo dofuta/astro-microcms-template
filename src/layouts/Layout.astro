@@ -1,7 +1,7 @@
 ---
 interface Props {
-  title: string;
-  description: string;
+  title?: string;
+  description?: string;
 }
 const { title, description } = Astro.props;
 const domain = import.meta.env.BASE_DOMAIN;
@@ -9,6 +9,7 @@ const canonicalURL = new URL(Astro.url.pathname, domain);
 const author = import.meta.env.AUTHOR || 'author';
 const themeColor = import.meta.env.THEME_COLOR || "#000000";
 const siteTitle = import.meta.env.SITE_TITLE || 'none';
+const pageTitle = title ? `${title} | ${siteTitle}` : siteTitle;
 const connectSrcBase = "'self' https://*.vimeo.com https://player-telemetry.vimeo.com https://fresnel.vimeocdn.com https://fastly.picsum.photos https://*.vimeocdn.com https://player.vimeo.com https://*.microcms.io https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com https://sdk.form.run";
 const connectSrc = import.meta.env.DEV
   ? `${connectSrcBase} http://*:3847 ws://*:3847`
@@ -33,7 +34,7 @@ const connectSrc = import.meta.env.DEV
     />
 
     <meta charset="UTF-8" />
-    <meta name="description" content={description} />
+    {description && <meta name="description" content={description} />}
     <meta name="theme-color" content="#000" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" type="image/svg+xml" href="/images/favicon-16.png" />
@@ -52,8 +53,8 @@ const connectSrc = import.meta.env.DEV
     <meta name="theme-color" content={themeColor} />
 
     <!-- Open Graph / Social Media -->
-    <meta property="og:title" content={title} />
-    <meta property="og:description" content={description} />
+    <meta property="og:title" content={pageTitle} />
+    {description && <meta property="og:description" content={description} />}
     <meta property="og:type" content="website" />
     <meta property="og:url" content={domain} />
     <meta property="og:image" content=`${domain}/images/ogp.png` />
@@ -62,11 +63,11 @@ const connectSrc = import.meta.env.DEV
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content={title} />
-    <meta name="twitter:description" content={description} />
+    <meta name="twitter:title" content={pageTitle} />
+    {description && <meta name="twitter:description" content={description} />}
     <meta name="twitter:image" content=`${domain}/images/ogp.png` />
 
-    <title>{title}</title>
+    <title>{pageTitle}</title>
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />

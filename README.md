@@ -1,48 +1,81 @@
-# Astro Starter Kit: Basics
+# astro-microcms-template
 
-```sh
-npm create astro@latest -- --template basics
+Astro + microCMS のテンプレートです。
+
+## セットアップ
+
+```bash
+npm install
+cp .env.example .env
 ```
 
-[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/withastro/astro/tree/latest/examples/basics)
-[![Open with CodeSandbox](https://assets.codesandbox.io/github/button-edit-lime.svg)](https://codesandbox.io/p/sandbox/github/withastro/astro/tree/latest/examples/basics)
-[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/withastro/astro?devcontainer_path=.devcontainer/basics/devcontainer.json)
+`.env` を編集してから `npm run dev` で起動します。
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+## microCMS 接続
 
-![just-the-basics](https://github.com/withastro/astro/assets/2244813/a0a5533c-a856-4198-8470-2d67b1d7c554)
+### 環境変数
 
-## 🚀 Project Structure
+[microCMS](https://microcms.io/) のサービス設定から値を取得し、`.env` に設定します。
 
-Inside of your Astro project, you'll see the following folders and files:
+| 変数                      | 説明                                                                  |
+| ------------------------- | --------------------------------------------------------------------- |
+| `MICROCMS_SERVICE_DOMAIN` | サービスドメイン（`https://{domain}.microcms.io` の `{domain}` 部分） |
+| `MICROCMS_API_KEY`        | API キー（設定 → API キー）                                           |
 
-```text
-/
-├── public/
-│   └── favicon.svg
-├── src/
-│   ├── layouts/
-│   │   └── Layout.astro
-│   └── pages/
-│       └── index.astro
-└── package.json
+### クライアント
+
+`src/libs/microcms.ts` で SDK クライアントを生成し、次の API を呼び出します。
+
+| 関数               | エンドポイント |
+| ------------------ | -------------- |
+| `getNewsItems()`   | `news`         |
+| `getMediaItems()`  | `media`        |
+| `getClientItems()` | `clients`      |
+
+ページやコンポーネントの frontmatter から import して利用します（ビルド時にサーバー側で取得）。
+
+```astro
+---
+import { getNewsItems } from '~/libs/microcms';
+const { contents } = await getNewsItems({ limit: 10 });
+---
 ```
 
-To learn more about the folder structure of an Astro project, refer to [our guide on project structure](https://docs.astro.build/en/basics/project-structure/).
+microCMS 管理画面で上記と同じ API ID のコンテンツを用意してください。画像は CSP で `images.microcms-assets.io` を許可済みです。
 
-## 🧞 Commands
+## iPhone 実機検証
 
-All commands are run from the root of the project, from a terminal:
+Mac と iPhone を**同じ Wi‑Fi**に接続し、開発マシンのファイアウォールでローカル接続を許可してください。
 
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
+### 起動
 
-## 👀 Want to learn more?
+```bash
+npm run dev:phone
+```
 
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+`dev:phone` は次を同時に起動します。
+
+- Astro dev（`--host` で LAN 向け URL を公開）
+- ログ受信サーバー（既定ポート `3847`）
+
+ターミナルに表示される **Network URL** または **QR コード** を iPhone の Safari で開きます。
+
+### ブラウザログの確認（remoteConsole）
+
+`src/scripts/remoteConsole.ts` が `console.*` と未処理エラーを Mac へ送信します。`Layout.astro` 経由で `src/scripts/common.ts` から有効化されます。
+
+| 項目         | 内容                                                                   |
+| ------------ | ---------------------------------------------------------------------- |
+| ログビューア | Mac のブラウザで `http://localhost:3847/`                              |
+| ログファイル | `.cursor/logs/<commit>.ingest.log`                                     |
+| 無効化       | URL に `?ingest=0`                                                     |
+| 送信先の変更 | `ingestHost` / `ingestPort` / `ingestProtocol` / `ingestUrl`（クエリ） |
+
+実機では送信先ホストがページと同じ LAN IP になるため、`localhost` への送信は行いません（`remoteConsole.ts` の安全チェック）。
+
+開発時のみ CSP が ingest 用ポート（`3847`）への `connect-src` を許可します（`Layout.astro`）。
+
+### トラブル時
+
+- ポート競合: `lsof -i :3847` で確認。別ポートは `INGEST_PORT=xxxx npm run dev:phone`
+- ingest が落ちた場合は `dev:phone` ごと再起動
