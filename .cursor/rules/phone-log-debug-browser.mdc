@@ -1,14 +1,15 @@
 ---
-description: ブラウザデバッグ時は phone-log を使う
+description: ブラウザ/スマホ(実機)のデバッグやログ計測(instrumentation/debug log)を行うときは phone-log(remoteConsole)を使う。固定URLへのfetch直書きは禁止。
 globs: src/**/*.{ts,js,tsx,jsx,astro}
-alwaysApply: false
+alwaysApply: true
 ---
 
 # Browser Debug Logging Rule
 
-- ブラウザ側デバッグでログ送信が必要なときは、`src/scripts/remoteConsole.ts` の仕組みを使う。
-- `src/scripts/*` やコンポーネント内に、固定URL（`localhost` / `127.0.0.1` / 固定ポート）への debug fetch を直書きしない。
-- 有効化はクエリパラメータで行う（`?ingest=1`、無効化は `?ingest=0`）。
+- ブラウザ側デバッグでログ送信が必要なときは、`src/scripts/remoteConsole.ts` の仕組みを使う（`console.*` がリモート転送される）。
+- 実機(iPhone等)からは `localhost` / `127.0.0.1` には到達できないため、固定URLの debug fetch を `src/scripts/*` やコンポーネントに直書きしない。
+- 計測ログは `console.log` で出す（remoteConsole が `http://<dev-host>:3847/ingest` へ転送し、`.cursor/logs/<commit>.ingest.log` に追記される）。
+- 有効化はクエリパラメータで行う（`?ingest=1`、無効化は `?ingest=0`）。dev では既定で有効、本番は `?ingest=1` のときのみ。
 - 送信先を変更する必要がある場合は `ingestUrl` / `ingestHost` / `ingestPort` / `ingestProtocol` を使う。
 - 既定の流れを壊さない: `scripts/log-ingest-server.mjs`（受信） + `scripts/dev-phone.mjs`（起動）を前提にする。
 
