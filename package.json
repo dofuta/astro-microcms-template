@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "astro dev",
     "dev:phone": "node scripts/dev-phone.mjs",
+    "github:sync:config": "node scripts/set-github-sync-config.mjs",
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro"

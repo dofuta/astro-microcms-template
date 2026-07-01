@@ -1,0 +1,61 @@
+name: Sync main to target repo
+
+on:
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: sync-to-target
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source repo
+        uses: actions/checkout@v4
+        with:
+          path: source
+          fetch-depth: 1
+
+      - name: Checkout (or init) target repo
+        env:
+          SYNC_TOKEN: ${{ secrets.SYNC_TARGET_TOKEN }}
+          TARGET_REPO: ${{ vars.SYNC_TARGET_REPO }}
+          TARGET_BRANCH: ${{ vars.SYNC_TARGET_BRANCH }}
+        run: |
+          BRANCH="${TARGET_BRANCH:-main}"
+          URL="https://x-access-token:${SYNC_TOKEN}@github.com/${TARGET_REPO}.git"
+          if ! git clone --branch "$BRANCH" --single-branch "$URL" target 2>/dev/null; then
+            git clone "$URL" target
+            cd target
+            git checkout -b "$BRANCH"
+          fi
+
+      - name: Copy files (mirror, excluding vcs/build artifacts)
+        run: |
+          rsync -a --delete \
+            --exclude='.git/' \
+            --exclude='node_modules/' \
+            --exclude='.github/workflows/sync-to-target.yml' \
+            source/ target/
+
+      - name: Commit and push if changed
+        env:
+          SYNC_TOKEN: ${{ secrets.SYNC_TARGET_TOKEN }}
+          TARGET_REPO: ${{ vars.SYNC_TARGET_REPO }}
+          TARGET_BRANCH: ${{ vars.SYNC_TARGET_BRANCH }}
+        working-directory: target
+        run: |
+          BRANCH="${TARGET_BRANCH:-main}"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if [ -n "$(git status --porcelain)" ]; then
+            TS=$(date -u '+%Y-%m-%d %H:%M:%S UTC')
+            git add -A
+            git commit -m "Sync from ${{ github.repository }}@${{ github.sha }} at ${TS}"
+            git push "https://x-access-token:${SYNC_TOKEN}@github.com/${TARGET_REPO}.git" "HEAD:${BRANCH}"
+          else
+            echo "No changes to sync."
+          fi

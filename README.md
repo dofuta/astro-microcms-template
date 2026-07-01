@@ -79,3 +79,24 @@ npm run dev:phone
 
 - ポート競合: `lsof -i :3847` で確認。別ポートは `INGEST_PORT=xxxx npm run dev:phone`
 - ingest が落ちた場合は `dev:phone` ごと再起動
+
+## GitHub Actions で別リポジトリへ同期
+
+`.github/workflows/sync-to-target.yml` は、`main` ブランチへの push をきっかけに、このリポジトリの内容を別リポジトリへ同期します。同期先にはタイムスタンプ付きのコミットメッセージで変更が積まれます。
+
+事前に、同期先リポジトリを GitHub 上に作成し、GitHub CLI で `gh auth login` を済ませてください。その後、ローカルで `.github.env` を作成して Secrets/Variables を登録します。
+
+```bash
+cp .github.env.example .github.env
+npm run github:sync:config
+```
+
+このコマンドは `git remote get-url origin` から登録先リポジトリを判定し、`gh secret set` / `gh variable set` で origin 側に設定します。
+
+`.github.env` は `.gitignore` 済みです。classic PAT などの実値はコミットしないでください。
+
+| 種別 | 名前 | 内容 |
+| --- | --- | --- |
+| Secret | `SYNC_TARGET_TOKEN` | 同期先リポジトリへ push できる classic PAT（`repo` scope） |
+| Variable | `SYNC_TARGET_REPO` | 同期先リポジトリ（例: `dofuta/target-repo`） |
+| Variable | `SYNC_TARGET_BRANCH` | 同期先ブランチ。未設定の場合は `main` |
