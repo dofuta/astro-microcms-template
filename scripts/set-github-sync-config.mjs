@@ -73,7 +73,7 @@ function getOriginRepository() {
 
 function setSecret(name, value) {
   console.log(`Setting secret: ${name}`);
-  run("gh", ["secret", "set", name, "--repo", originRepository, "--body-file", "-"], value);
+  run("gh", ["secret", "set", name, "--repo", originRepository], value);
 }
 
 function setVariable(name, value) {
